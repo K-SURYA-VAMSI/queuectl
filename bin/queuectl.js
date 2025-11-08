@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { ensureDirs, getConfig, setConfig, db, initDb, enqueueJob, listJobs, getStatus, startWorkers, stopWorkers, dlqList, dlqRetry } from '../src/index.js';
+import { ensureDirs, getConfig, setConfig, db, initDb, enqueueJob, listJobs, getStatus, startWorkers, stopWorkers, dlqList, dlqRetry, closeDb } from '../src/index.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -20,7 +20,7 @@ program
   .command('enqueue')
   .argument('<jobJson>', 'Job as JSON string, minimally { "command": "echo \'hi\'" }')
   .option('--run-at <iso>', 'ISO time to schedule the run (optional)')
-  .option('--max-retries <n>', 'Override max retries', parseInt)
+  .option('--max-retries <n>', 'Override max retries', (v) => parseInt(v, 10))
   .action(async (jobJson, opts) => {
     await initDb();
     const job = JSON.parse(jobJson);
@@ -34,11 +34,13 @@ const worker = program.command('worker').description('Manage workers');
 
 worker
   .command('start')
-  .option('--count <n>', 'Number of workers', parseInt, 1)
-  .option('--poll-interval <ms>', 'Polling interval in ms', parseInt, 500)
+  .option('--count <n>', 'Number of workers', (v) => parseInt(v, 10), 1)
+  .option('--poll-interval <ms>', 'Polling interval in ms', (v) => parseInt(v, 10), 500)
   .action(async (opts) => {
     await initDb();
     await startWorkers(opts.count, opts.pollInterval);
+    closeDb();
+    process.exit(0);
   });
 
 worker
@@ -59,8 +61,8 @@ program
 program
   .command('list')
   .option('--state <state>', 'Filter by job state (pending|processing|completed|failed|dead)')
-  .option('--limit <n>', 'Limit', parseInt, 50)
-  .option('--offset <n>', 'Offset', parseInt, 0)
+  .option('--limit <n>', 'Limit', (v) => parseInt(v, 10), 50)
+  .option('--offset <n>', 'Offset', (v) => parseInt(v, 10), 0)
   .action(async (opts) => {
     await initDb();
     const rows = listJobs(opts.state, opts.limit, opts.offset);

@@ -28,6 +28,13 @@ export function db() {
   return _db;
 }
 
+export function closeDb() {
+  if (_db) {
+    _db.close();
+    _db = null;
+  }
+}
+
 export async function initDb() {
   await ensureDirs();
   const d = db();
@@ -70,7 +77,7 @@ export async function initDb() {
     ['max_retries', '3'],
     ['backoff_base', '2'],
     ['poll_interval_ms', '500'],
-    ['job_timeout_ms', '0'] -- 0 => no timeout
+    ['job_timeout_ms', '0'] // 0 => no timeout
   ];
   const upsert = d.prepare('INSERT INTO config(key,value) VALUES(?,?) ON CONFLICT(key) DO NOTHING');
   for (const [k,v] of defaults) upsert.run(k,v);
@@ -178,7 +185,7 @@ export async function workerLoop(worker_id, pollMs) {
   process.on('SIGINT', () => { stopping = true; d.prepare('UPDATE workers SET stopping=1 WHERE id=?').run(worker_id); });
 
   while (true) {
-    d.prepare('UPDATE workers SET heartbeat_at=?').run(nowIso(), worker_id);
+    d.prepare('UPDATE workers SET heartbeat_at=? WHERE id=?').run(nowIso(), worker_id);
 
     if (stopping) {
       // graceful exit: finish loop without claiming new jobs
@@ -243,15 +250,18 @@ export async function workerLoop(worker_id, pollMs) {
 }
 
 export async function startWorkers(count=1, pollInterval=Number(getConfig('poll_interval_ms')||500)) {
+  count = Number(count) || 1;
   await fs.ensureFile(PID_FILE);
   const pids = (await fs.readJson(PID_FILE).catch(() => ({ workers: [] }))) || { workers: [] };
   const { fork } = await import('node:child_process');
   for (let i=0; i<count; i++) {
     const worker_id = nanoid();
     const child = fork(new URL('./worker.js', import.meta.url), [], {
-      stdio: 'inherit',
+      stdio: 'ignore',
+      detached: true,
       env: { ...process.env, QUEUECTL_WORKER_ID: worker_id, QUEUECTL_POLL: String(pollInterval) }
     });
+    child.unref(); // Allow parent to exit without waiting for child
     pids.workers.push({ pid: child.pid, id: worker_id, started_at: nowIso() });
   }
   await fs.writeJson(PID_FILE, pids, { spaces: 2 });

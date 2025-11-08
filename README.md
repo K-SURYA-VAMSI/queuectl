@@ -166,9 +166,39 @@ npm run demo
 - Graceful shutdown
 - Persistence across restarts
 
+### Recording Your Own Demo
+
+**Option 1: Using asciinema (Recommended for Linux/Mac)**
+```bash
+# Install asciinema
+brew install asciinema  # macOS
+# or: sudo apt install asciinema  # Ubuntu/Debian
+
+# Record demo
+asciinema rec queuectl-demo.cast
+
+# Run the demo script
+./scripts/demo-for-recording.sh
+
+# Stop recording (Ctrl+D)
+# Upload to asciinema.org or convert to GIF
+```
+
+**Option 2: Automated demo script**
+```bash
+# This script demonstrates all features with pauses
+./scripts/demo-for-recording.sh
+```
+
+**Option 3: Manual demo**
+```bash
+# See "Manual Test Run" section below
+```
+
 **Recording Tools**:
 - Linux/Mac: `asciinema` (https://asciinema.org/)
 - Windows: OBS Studio or Win+G (Game Bar)
+- Alternative: `terminalizer` or `vhs` for animated demos
 
 ### Manual Test Run
 
