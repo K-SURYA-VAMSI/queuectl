@@ -1,0 +1,27 @@
+{
+  "name": "queuectl",
+  "version": "1.0.0",
+  "description": "CLI-based background job queue with workers, retries, backoff, and DLQ.",
+  "bin": {
+    "queuectl": "bin/queuectl.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "echo 'Nothing to build'",
+    "demo": "node scripts/demo.js",
+    "lint": "node -e \"console.log('lint placeholder')\"",
+    "test": "node scripts/smoke-test.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.6.0",
+    "commander": "^12.1.0",
+    "execa": "^9.6.0",
+    "fs-extra": "^11.3.2",
+    "kleur": "^4.1.5",
+    "nanoid": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}

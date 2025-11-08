@@ -1,0 +1,15 @@
+
+node_modules
+.DS_Store
+dist
+tmp
+logs
+.queuectl
+.sqlite*
+
+# OS
+Thumbs.db
+
+# Editor
+.vscode
+.idea
